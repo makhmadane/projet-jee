@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: GATEWAY-SERVICE
+  cloud:
+    gateway:
+      routes:
+        - id: inscription-service
+          uri: lb://INSCRIPTION-SERVICE
+          predicates:
+            - Path=/inscription/**,/classe/**,/eleve/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: inscription-service
+                fallbackuri: forward:/inscriptionFallBack
+        - id: document-service
+          uri: lb://DOCUMENT-SERVICE
+          predicates:
+            - Path=/payment/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: document-service
+                fallbackuri: forward:/documentFallBack
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
+
+server:
+  port: 8989
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 5000
